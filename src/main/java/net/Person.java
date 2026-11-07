@@ -3,6 +3,8 @@ package net;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -15,9 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Person {
-    public static String PATH; // путь файла, который хочу отправить
-    private static final String PATH_FOR_LOADING = "D:\\Вадим\\Java\\Project\\P2P\\Загрузки"; // путь к загрузкам
-    private final String PersonalPath = "128";
+    private static final Logger logger = LogManager.getLogger(Person.class);
     private final String MyPath = "127";
     public static final int PORT = 8001;
     private final String IP;
@@ -26,11 +26,11 @@ public class Person {
     public Person(String IP){
         this.IP = IP;
         URL_FROM_FRIENDS = "http://" + IP + ":" + PORT + "/" + 127;
-        System.out.println("Загрузки: " + getPathForLoading());
     }
 
     public void client(Path path_to_file){ // здесь я обращаюсь к другому пользователю
         System.out.println("Отправляется к: " + URL_FROM_FRIENDS);
+        logger.info("Отправка сообщения");
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(URL_FROM_FRIENDS))
@@ -41,6 +41,7 @@ public class Person {
             HttpClient client = HttpClient.newHttpClient();
             HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
             System.out.println("Статус: " + response.statusCode() + " отправлено ");
+            logger.info("Статус: " + response.statusCode() +  " отправлено");
         } catch (Exception e){
             throw new RuntimeException(e.getMessage());
         }
@@ -50,6 +51,7 @@ public class Person {
         try(FileInputStream input = new FileInputStream(path_to_file.toString())){
             return input.readAllBytes();
         } catch (IOException e){
+            logger.error(e.getMessage() + " (Возникла ошибка при чтении для Client)");
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -61,6 +63,7 @@ public class Person {
                 Files.createDirectory(path);
             }
         } catch (IOException e){
+            logger.error(e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
         try (FileOutputStream output = new FileOutputStream(getPathForLoading() + "/" + fullName)) {
@@ -69,7 +72,9 @@ public class Person {
             }
 
             System.out.println("Сохранено в загрузки");
+            logger.info("Успешно сохранено");
         } catch (IOException e) {
+            logger.error(e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -81,7 +86,9 @@ public class Person {
             server.setExecutor(null);
             server.start();
             System.out.println("Сервер запущен!");
+            logger.info("Сервер запущен");
         } catch (Exception e){
+            logger.error(e.getMessage());
             throw new RuntimeException(e.getMessage());
         }
     }
@@ -98,6 +105,7 @@ public class Person {
                     outputStream.write(answer);
                     System.out.println("загружено");
                 } catch (IOException e){
+                    logger.error(e.getMessage());
                     throw new RuntimeException(e.getMessage());
                 }
             }
