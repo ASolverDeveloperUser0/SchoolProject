@@ -1,4 +1,4 @@
-package net.crypto;
+package net.safety.crypto;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;

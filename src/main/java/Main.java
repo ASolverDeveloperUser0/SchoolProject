@@ -1,6 +1,8 @@
 import GUI.API;
-import net.crypto.Encryptor;
+import com.github.windpapi4j.WinDPAPI;
+import net.safety.crypto.Encryptor;
 import net.Person;
+import net.safety.io.FileManager;
 
 public class Main {
     public static void main(String[] args) {
@@ -16,8 +18,8 @@ public class Main {
         encryptor.setPublicKey(encryptor1.getPublicKey());
         encryptor1.setPublicKey(encryptor.getPublicKey());
 
-       byte[] hello = encryptor.encrypt("Привет Vddvsdvskdmlac amsdjasmdaj aivjkalmcaisjv maiosjiamoscjasoijcasvavdasv!".getBytes());
-        String s = new String(encryptor1.decrypt(hello));
+       byte[] hello = encryptor.encrypt("Привет!".getBytes(), encryptor.getSharedKey());
+        String s = new String(encryptor1.decrypt(hello, encryptor1.getSharedKey()));
         System.out.println(s);
     }
 }
