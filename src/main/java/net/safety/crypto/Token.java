@@ -14,8 +14,9 @@ public class Token {
     private final KeyPair pair;
     public Token(){
         try {
-            KeyPairGenerator pairGenerator = KeyPairGenerator.getInstance("EC");
-            pairGenerator.initialize(256);
+            KeyPairGenerator pairGenerator = KeyPairGenerator.getInstance("RSA");
+            // RSA - метод, который требуется для генерации сертификата (SHA256withRSA)
+            pairGenerator.initialize(2048); // если меньше, то кидает исключение
             KeyPair pair = pairGenerator.generateKeyPair();
             this.pair = pair;
             privateKey = pair.getPrivate();
@@ -29,9 +30,13 @@ public class Token {
         return publicKey;
     }
 
-    public X509Certificate getCertificate(){
+    public PrivateKey getPrivateKey() {
+        return privateKey;
+    }
+
+    public X509Certificate getCertificate(){ //генерирую сертификат
         Certificate certificate = new Certificate();
-        return certificate.generateSelfCertificate(pair, getFingerPrint(publicKey));
+        return certificate.generateSelfCertificate(pair, "123456789");
     }
 
     public String getFingerPrint(PublicKey publicKey){

@@ -33,6 +33,10 @@ public class Encryptor {
         return publicKey;
     }
 
+    public KeyPair getPair() {
+        return pair;
+    }
+
     private PublicKey generateKey(byte[] key_second_person){
         if (key_second_person == null){
             return null;
