@@ -21,9 +21,9 @@ public class Certificate {
             X500Name CommonName = new X500Name("CN=" + peerIDCN);
 
             X509v3CertificateBuilder builder = new X509v3CertificateBuilder(CommonName, BigInteger.valueOf(timeNow),
-                    dateStart, dateFinish, CommonName, SubjectPublicKeyInfo.getInstance(pair.getPublic()));
+                    dateStart, dateFinish, CommonName, SubjectPublicKeyInfo.getInstance(pair.getPublic().getEncoded()));
 
-            ContentSigner contentSigner = new JcaContentSignerBuilder("").build(pair.getPrivate());
+            ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256withRSA").build(pair.getPrivate());
 
             return new JcaX509CertificateConverter().getCertificate(builder.build(contentSigner));
         } catch (Exception e){
