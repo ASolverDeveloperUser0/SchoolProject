@@ -5,6 +5,7 @@ import net.Person;
 import net.safety.crypto.Token;
 import net.safety.io.FileManager;
 import net.safety.io.KeySaver;
+import net.safety.io.MessageSaver;
 
 public class Main {
     public static void main(String[] args) {
@@ -15,13 +16,9 @@ public class Main {
         });
 
         */
-        Encryptor encryptor = new Encryptor();
-        Encryptor encryptor1 = new Encryptor();
-        encryptor.setPublicKey(encryptor1.getPublicKey());
-        encryptor1.setPublicKey(encryptor.getPublicKey());
-
-       byte[] hello = encryptor.encrypt("Привет!".getBytes(), encryptor.getSharedKey());
-        String s = new String(encryptor1.decrypt(hello, encryptor1.getSharedKey()));
-        System.out.println(s);
+        MessageSaver saver = new MessageSaver();
+        System.out.println(saver.getPathForConnection());
+        saver.setTableValue();
+        System.out.println(saver.getTableValue());
     }
 }
