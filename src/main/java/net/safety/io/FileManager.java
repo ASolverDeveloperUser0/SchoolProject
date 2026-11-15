@@ -25,7 +25,7 @@ public class FileManager {
         return Paths.get("").toAbsolutePath().toString();
     }
 
-    private void loading(byte[] bytes, String fullName){ // скачиваю файл от другого пользователя в загрузки
+    public void loading(byte[] bytes, String fullName){ // скачиваю файл от другого пользователя в загрузки
         try {
             Path path = Path.of(getPathForLoading());
             if (!Files.exists(path)) { // Проверяю, есть ли папка загрузки. В противном случае создаю эту папку
@@ -48,7 +48,7 @@ public class FileManager {
         }
     }
 
-    private byte[] read(Path path_to_file){ // читаю для client
+    public byte[] read(Path path_to_file){ // читаю для client
         try(FileInputStream input = new FileInputStream(path_to_file.toString())){
             return input.readAllBytes();
         } catch (IOException e){

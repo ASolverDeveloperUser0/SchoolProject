@@ -9,10 +9,10 @@ import java.security.cert.X509Certificate;
 import java.util.HexFormat;
 
 public class Token {
-    private final PublicKey publicKey;
-    private final PrivateKey privateKey;
-    private final KeyPair pair;
-    public Token(){
+    private PublicKey publicKey;
+    private PrivateKey privateKey;
+    private KeyPair pair;
+    public void generate(){
         try {
             KeyPairGenerator pairGenerator = KeyPairGenerator.getInstance("RSA");
             // RSA - метод, который требуется для генерации сертификата (SHA256withRSA)
@@ -22,7 +22,7 @@ public class Token {
             privateKey = pair.getPrivate();
             publicKey = pair.getPublic();
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -34,9 +34,10 @@ public class Token {
         return privateKey;
     }
 
-    public X509Certificate getCertificate(){ //генерирую сертификат
+    public X509Certificate getCertificate(PublicKey publicKey){ //генерирую сертификат
         Certificate certificate = new Certificate();
-        return certificate.generateSelfCertificate(pair, "123456789");
+        return certificate.generateSelfCertificate(pair, getFingerPrint(publicKey));
+        // в качестве ID я использую просто отпечаток публичного ключа
     }
 
     public String getFingerPrint(PublicKey publicKey){
@@ -45,14 +46,14 @@ public class Token {
             byte[] fingerprint = digest.digest(publicKey.getEncoded());
             return HexFormat.of().formatHex(fingerprint);
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
-    public byte[] generateJWT(){
+    public byte[] generateJWT(PrivateKey privateKey, PublicKey publicKey){
         String jwt = Jwts.builder()
-                .subject("")
-                .claim("", "")
+                .subject(getFingerPrint(publicKey))
+                .claim("purpose", "auth")
                 .signWith(privateKey, Jwts.SIG.ES256)
                 .compact();
         return jwt.getBytes();
@@ -60,7 +61,7 @@ public class Token {
 
 
 
-    public boolean isValidToken(String token, PublicKey key){
+    public static boolean isValidToken(String token, PublicKey key){
         try {
             Jws<Claims> jws = Jwts.parser()
                     .verifyWith(key)

@@ -27,7 +27,7 @@ public class Certificate {
 
             return new JcaX509CertificateConverter().getCertificate(builder.build(contentSigner));
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 }

@@ -3,17 +3,18 @@ package net.safety.crypto;
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
 import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 
 
 public class Encryptor {
-   private final byte[] publicKey;
-   private final KeyPair pair;
+   private byte[] publicKey;
+   private KeyPair pair;
    private byte[] key_second_person;
 
-    public Encryptor(){
+    public void generate(){
         try {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("DH");
             generator.initialize(2048);
@@ -48,7 +49,17 @@ public class Encryptor {
 
             return key;
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static PublicKey byteToPublicKey(byte[] key){
+        try {
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(key);
+            KeyFactory factory = KeyFactory.getInstance("RSA");
+            return factory.generatePublic(spec);
+        } catch (Exception e){
+            throw new RuntimeException(e);
         }
     }
 
@@ -63,7 +74,7 @@ public class Encryptor {
 
             return new SecretKeySpec(digest.digest(secret), "AES");
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -73,7 +84,7 @@ public class Encryptor {
             mac.init(getSharedKey());
             return mac.doFinal(message);
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -85,17 +96,17 @@ public class Encryptor {
             return MessageDigest.isEqual(mac_from_me, sentMac);
 
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
-    public byte[] encrypt(byte[] message, SecretKeySpec sharedKey){
+    public byte[] encrypt(byte[] message, SecretKey sharedKey){
         try {
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.ENCRYPT_MODE, sharedKey);
             return cipher.doFinal(message);
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage() + " проблемы при шифровании");
+            throw new RuntimeException(e + " проблемы при шифровании");
         }
     }
 
@@ -105,7 +116,7 @@ public class Encryptor {
             cipher.init(Cipher.DECRYPT_MODE, sharedKey);
             return cipher.doFinal(encryptedMessage);
         } catch (Exception e){
-            throw new RuntimeException(e.getMessage() + " проблема при расшифровке");
+            throw new RuntimeException(e + " проблема при расшифровке");
         }
     }
 
