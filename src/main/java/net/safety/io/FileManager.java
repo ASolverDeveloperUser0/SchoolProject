@@ -14,7 +14,15 @@ public class FileManager {
     private static final Logger logger = LogManager.getLogger(FileManager.class);
 
     public FileManager(){
+        try {
+            if (!Files.exists(Path.of(getPathForLoading()))) { // Проверяю, есть ли папка загрузки. В противном случае создаю эту папку
+                Files.createDirectory(Path.of(getPathForLoading()));
+            }
 
+
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
 
     private String getPathForLoading(){
@@ -26,15 +34,6 @@ public class FileManager {
     }
 
     public void loading(byte[] bytes, String fullName){ // скачиваю файл от другого пользователя в загрузки
-        try {
-            Path path = Path.of(getPathForLoading());
-            if (!Files.exists(path)) { // Проверяю, есть ли папка загрузки. В противном случае создаю эту папку
-                Files.createDirectory(path);
-            }
-        } catch (IOException e){
-            logger.error(e.getMessage());
-            throw new RuntimeException(e.getMessage());
-        }
         try (FileOutputStream output = new FileOutputStream(getPathForLoading() + "/" + fullName)) {
             if (bytes.length > 0) {
                 output.write(bytes);

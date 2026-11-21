@@ -10,7 +10,7 @@ import java.security.spec.X509EncodedKeySpec;
 
 
 public class Encryptor {
-   private byte[] publicKey;
+   private PublicKey publicKey;
    private KeyPair pair;
    private byte[] key_second_person;
 
@@ -20,17 +20,13 @@ public class Encryptor {
             generator.initialize(2048);
             KeyPair pair = generator.generateKeyPair();
             this.pair = pair;
-            publicKey = pair.getPublic().getEncoded();
+            publicKey = pair.getPublic();
         } catch (Exception e){
             throw new RuntimeException(e.getMessage());
         }
     }
 
-    public void setPublicKey(byte[] key_second_person){
-        this.key_second_person = key_second_person;
-    }
-
-    public byte[] getPublicKey(){
+    public PublicKey getPublicKey(){
         return publicKey;
     }
 
@@ -38,10 +34,11 @@ public class Encryptor {
         return pair;
     }
 
-    private PublicKey generateKey(byte[] key_second_person){
-        if (key_second_person == null){
-            return null;
-        }
+    public PrivateKey getPrivateKey(){
+        return pair.getPrivate();
+    }
+
+    public PublicKey generateKey(byte[] key_second_person){
         try {
             X509EncodedKeySpec spec = new X509EncodedKeySpec(key_second_person);
             KeyFactory factory = KeyFactory.getInstance("DH");
@@ -63,10 +60,11 @@ public class Encryptor {
         }
     }
 
-    public SecretKeySpec getSharedKey(){
+    public SecretKeySpec getSharedKey(byte[] key_second_person, PrivateKey privateKey){
+        this.key_second_person = key_second_person;
         try {
             KeyAgreement agreement = KeyAgreement.getInstance("DH");
-            agreement.init(pair.getPrivate());
+            agreement.init(privateKey);
             agreement.doPhase(generateKey(key_second_person), true);
             byte[] secret = agreement.generateSecret();
 
@@ -81,7 +79,7 @@ public class Encryptor {
     public byte[] solveMac(byte[] message){
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(getSharedKey());
+            mac.init(getSharedKey(key_second_person, getPrivateKey()));
             return mac.doFinal(message);
         } catch (Exception e){
             throw new RuntimeException(e);
@@ -110,7 +108,7 @@ public class Encryptor {
         }
     }
 
-    public byte[] decrypt(byte[] encryptedMessage, SecretKeySpec sharedKey){
+    public byte[] decrypt(byte[] encryptedMessage, SecretKey sharedKey){
         try{
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.DECRYPT_MODE, sharedKey);

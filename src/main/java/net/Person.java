@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,7 +40,7 @@ public class Person {
   private final KeySaver keySaver = new KeySaver();
   private final Encryptor encryptor = new Encryptor();
   private final Token token = new Token();
-  private final SecretKey ShredKey;
+  private SecretKey ShredKey;
   private final PrivateKey privateKey;
   private final PublicKey publicKey;
 
@@ -51,16 +52,20 @@ public class Person {
         if (KeySaver.doGenerate()) {
             encryptor.generate(); // сделал без конструктора, чтобы лишний раз не генерировались ключи
             token.generate();
-            keySaver.saveSharedKey(encryptor.getSharedKey());
             keySaver.savePrivateKey(token.getPrivateKey(), token.getCertificate(token.getPublicKey()));
-            ShredKey = encryptor.getSharedKey();
+
             privateKey = token.getPrivateKey();
             publicKey = token.getPublicKey();
+            start();
         } else {
             ShredKey = keySaver.getSharedKey();
             privateKey = keySaver.getPrivateKey();
             publicKey = keySaver.getPublicKey();
         }
+    }
+
+    public String getURL(){
+        return URL;
     }
 
     public void client(Path path_to_file){ // здесь я обращаюсь к другому пользователю
@@ -84,13 +89,14 @@ public class Person {
         }
     }
 
-    public void start(){
+    private void start(){
         ID = token.getFingerPrint(token.getPublicKey()); // мой уникальный ID по публичному ключу токена
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(URL))
                     .header("start", "token")
-                    .header("PublicKey", token.getPublicKey().toString())
+                    .header("PublicKey", new String(token.getPublicKey().getEncoded(), StandardCharsets.UTF_8))
+                    .header("PublicKeyForSharedSecret", encryptor.getPublicKey().toString())
                     .POST(HttpRequest.BodyPublishers.ofByteArray(token.generateJWT(privateKey, publicKey)))
                     .build();
 
@@ -136,7 +142,15 @@ public class Person {
                             throw new RuntimeException("Токен этого пользователя недействителен");
                         }
                     }
-                    fileManager.loading(input.readAllBytes(), exchange.getRequestHeaders().getFirst("FileName"));
+
+                    if (KeySaver.doGenerate()) { // формирую и сохраняю общий пароль если это надо делать
+                        ShredKey = encryptor.getSharedKey(exchange.getRequestHeaders().
+                                getFirst("PublicKeyForSharedSecret").getBytes(), encryptor.getPrivateKey());
+                        keySaver.saveSharedKey(ShredKey);
+                    }
+
+                    fileManager.loading(encryptor.decrypt(input.readAllBytes(), ShredKey),
+                            exchange.getRequestHeaders().getFirst("FileName")); // расшифровываю и сохраняю
                     byte[] answer = "Ответ".getBytes();
                     exchange.sendResponseHeaders(200, answer.length);
                     outputStream.write(answer);
